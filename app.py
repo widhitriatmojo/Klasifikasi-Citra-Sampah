@@ -1,5 +1,8 @@
-st.set_page_config(page_title="Klasifikasi Sampah Otomatis", layout="centered")
 import streamlit as st
+
+# 🧩 WAJIB: letakkan di sini, paling atas
+st.set_page_config(page_title="Klasifikasi Sampah Otomatis", layout="centered")
+
 import tensorflow as tf
 from tensorflow.keras.preprocessing import image
 from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
@@ -8,16 +11,14 @@ from PIL import Image
 import io
 
 # =========================================================
-# 1️⃣ LOAD MODEL (cache biar gak ngulang setiap refresh)
+# 1️⃣ LOAD MODEL (cache agar cepat)
 # =========================================================
 @st.cache_resource
 def load_model():
-    model = tf.keras.models.load_model("best_tl.h5")
-    return model
+    return tf.keras.models.load_model("best_tl.h5")
 
 model = load_model()
 
-# Label kelas — ubah sesuai dataset kamu
 LABELS = ['Kaca', 'Kardus', 'Kertas', 'Logam', 'Plastik', 'Residu']
 
 # =========================================================
@@ -36,28 +37,24 @@ def predict_image(img):
 # =========================================================
 # 3️⃣ ANTARMUKA STREAMLIT
 # =========================================================
-st.set_page_config(page_title="Klasifikasi Sampah Otomatis", layout="centered")
 st.title("♻️ Klasifikasi Sampah Otomatis (MobileNetV2)")
 st.markdown("Unggah gambar atau ambil foto dari kamera untuk mendeteksi jenis sampah.")
 
 option = st.radio("Pilih sumber gambar:", ["Upload dari Internal", "Ambil dari Kamera"])
 image_input = None
 
-# Upload dari internal
 if option == "Upload dari Internal":
     uploaded_file = st.file_uploader("Pilih file gambar (jpg/png/jpeg):", type=["jpg", "jpeg", "png"])
-    if uploaded_file is not None:
+    if uploaded_file:
         image_input = Image.open(uploaded_file)
         st.image(image_input, caption="📁 Gambar yang diunggah", use_container_width=True)
 
-# Ambil dari kamera
 elif option == "Ambil dari Kamera":
     camera_photo = st.camera_input("📸 Ambil foto langsung")
-    if camera_photo is not None:
+    if camera_photo:
         image_input = Image.open(io.BytesIO(camera_photo.getvalue()))
         st.image(image_input, caption="📸 Gambar hasil kamera", use_container_width=True)
 
-# Tombol prediksi
 if image_input is not None:
     st.write("---")
     if st.button("🔍 Prediksi Sekarang"):
