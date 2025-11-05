@@ -9,11 +9,11 @@ import tensorflow as tf
 from tensorflow.keras.preprocessing import image
 from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
 import numpy as np
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 import io
 
 # =========================================================
-# 1️⃣ LOAD MODEL (pakai cache biar gak reload terus)
+# 1️⃣ LOAD MODEL (pakai cache agar cepat)
 # =========================================================
 @st.cache_resource
 def load_model():
@@ -22,11 +22,11 @@ def load_model():
 
 model = load_model()
 
-# Label kelas sesuai dataset kamu
+# Label kelas (ubah sesuai dataset kamu)
 LABELS = ['Kaca', 'Kardus', 'Kertas', 'Logam', 'Plastik', 'Residu']
 
 # =========================================================
-# 2️⃣ FUNGSI PREDIKSI GAMBAR
+# 2️⃣ FUNGSI PREDIKSI
 # =========================================================
 def predict_image(img):
     try:
@@ -36,7 +36,7 @@ def predict_image(img):
         img_array = preprocess_input(img_array)
         preds = model.predict(img_array)
         pred_class = np.argmax(preds, axis=1)[0]
-        confidence = np.max(preds)
+        confidence = float(np.max(preds))
         return LABELS[pred_class], confidence
     except Exception as e:
         st.error(f"Terjadi kesalahan saat memproses gambar: {e}")
@@ -46,33 +46,38 @@ def predict_image(img):
 # 3️⃣ ANTARMUKA STREAMLIT
 # =========================================================
 st.title("♻️ Klasifikasi Sampah Otomatis (MobileNetV2)")
-st.markdown("Unggah gambar atau ambil foto dari kamera untuk mendeteksi jenis sampah.")
+st.markdown(
+    "Unggah gambar atau ambil foto dari kamera untuk mendeteksi jenis sampah. "
+    "Model ini dilatih menggunakan arsitektur **MobileNetV2**."
+)
 
 option = st.radio("Pilih sumber gambar:", ["Upload dari Internal", "Ambil dari Kamera"])
 image_input = None
 
 # ---------------------------------------------------------
-# Upload dari penyimpanan lokal
+# UPLOAD GAMBAR DARI INTERNAL
 # ---------------------------------------------------------
 if option == "Upload dari Internal":
     uploaded_file = st.file_uploader(
-        "Pilih file gambar (jpg/png/jpeg):",
+        "Pilih file gambar (JPG / JPEG / PNG):",
         type=["jpg", "jpeg", "png"]
     )
 
     if uploaded_file is not None:
-        # Validasi ukuran file
         if uploaded_file.size > 5 * 1024 * 1024:
             st.warning("⚠️ Ukuran file terlalu besar. Maksimal 5MB.")
         else:
             try:
-                image_input = Image.open(uploaded_file).convert("RGB")
+                image_bytes = uploaded_file.read()
+                image_input = Image.open(io.BytesIO(image_bytes)).convert("RGB")
                 st.image(image_input, caption="📁 Gambar yang diunggah", use_container_width=True)
-            except Exception:
-                st.error("File yang diunggah bukan gambar yang valid.")
+            except UnidentifiedImageError:
+                st.error("❌ File yang diunggah bukan gambar yang valid.")
+            except Exception as e:
+                st.warning(f"⚠️ Terjadi peringatan kecil: {e}")
 
 # ---------------------------------------------------------
-# Ambil dari kamera
+# FOTO DARI KAMERA
 # ---------------------------------------------------------
 elif option == "Ambil dari Kamera":
     camera_photo = st.camera_input("📸 Ambil foto langsung")
@@ -80,8 +85,8 @@ elif option == "Ambil dari Kamera":
         try:
             image_input = Image.open(io.BytesIO(camera_photo.getvalue())).convert("RGB")
             st.image(image_input, caption="📸 Gambar hasil kamera", use_container_width=True)
-        except Exception:
-            st.error("Gagal memproses foto dari kamera.")
+        except Exception as e:
+            st.error(f"❌ Gagal membaca foto: {e}")
 
 # ---------------------------------------------------------
 # TOMBOL PREDIKSI
@@ -92,12 +97,27 @@ if image_input is not None:
         with st.spinner("Sedang memproses gambar..."):
             label, conf = predict_image(image_input)
             if label is not None:
-                st.success(f"✅ Prediksi: **{label.upper()}** (Confidence: {conf:.2f})")
+                st.success("✅ Prediksi berhasil!")
+                st.markdown(
+                    f"""
+                    <div style='background-color:#E8F5E9;padding:15px;border-radius:10px'>
+                        <h3 style='color:#2E7D32;text-align:center'>♻️ {label.upper()}</h3>
+                        <p style='text-align:center;font-size:18px'>
+                            Tingkat keyakinan: <b>{conf*100:.2f}%</b>
+                        </p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+                # Tambahkan bar kepercayaan (confidence)
+                st.progress(conf)
+
 else:
     st.info("Silakan unggah gambar atau ambil foto terlebih dahulu untuk melakukan prediksi.")
 
 # ---------------------------------------------------------
-# Footer kecil biar lebih rapi
+# FOOTER
 # ---------------------------------------------------------
 st.markdown("<hr>", unsafe_allow_html=True)
-st.caption("Dibuat dengan ❤️ menggunakan Streamlit & TensorFlow")
+st.caption("Dibuat dengan ❤️ menggunakan Streamlit & TensorFlow (MobileNetV2)")
