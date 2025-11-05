@@ -1,3 +1,4 @@
+st.set_page_config(page_title="Klasifikasi Sampah Otomatis", layout="centered")
 import streamlit as st
 import tensorflow as tf
 from tensorflow.keras.preprocessing import image
