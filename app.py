@@ -10,7 +10,7 @@ import io
 # 1️⃣ LOAD MODEL
 # =========================================================
 MODEL_PATH = "best_tl.h5"
-model = tf.keras.models.load_model(MODEL_PATH)
+model = tf.keras.models.load_model(MODEL_PATH, compile=False)
 labels =  ['Kaca', 'Kardus', 'Kertas', 'Logam', 'Plastik', 'Residu']  # ubah sesuai label kamu
 
 # =========================================================
@@ -70,3 +70,4 @@ if image_input is not None:
             st.success(f"✅ Prediksi: **{label.upper()}** (Confidence: {conf:.2f})")
 else:
     st.info("Silakan unggah gambar atau ambil foto terlebih dahulu untuk melakukan prediksi.")
+
