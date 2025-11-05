@@ -70,7 +70,7 @@ if option == "Upload dari Internal":
             try:
                 image_bytes = uploaded_file.read()
                 image_input = Image.open(io.BytesIO(image_bytes)).convert("RGB")
-                st.image(image_input, caption="📁 Gambar yang diunggah", use_container_width=True)
+              st.image(image_input, caption="📁 Gambar yang diunggah", use_column_width=True)
             except UnidentifiedImageError:
                 st.error("❌ File yang diunggah bukan gambar yang valid.")
             except Exception as e:
@@ -121,3 +121,4 @@ else:
 # ---------------------------------------------------------
 st.markdown("<hr>", unsafe_allow_html=True)
 st.caption("Dibuat dengan ❤️ menggunakan Streamlit & TensorFlow (MobileNetV2)")
+
