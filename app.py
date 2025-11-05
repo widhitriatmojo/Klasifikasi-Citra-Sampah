@@ -7,16 +7,21 @@ from PIL import Image
 import io
 
 # =========================================================
-# 1️⃣ LOAD MODEL
+# 1️⃣ LOAD MODEL (cache biar gak ngulang setiap refresh)
 # =========================================================
-MODEL_PATH = "best_tl.h5"
-model = tf.keras.models.load_model(MODEL_PATH, compile=False)
-labels =  ['Kaca', 'Kardus', 'Kertas', 'Logam', 'Plastik', 'Residu']  # ubah sesuai label kamu
+@st.cache_resource
+def load_model():
+    model = tf.keras.models.load_model("best_tl.h5")
+    return model
+
+model = load_model()
+
+# Label kelas — ubah sesuai dataset kamu
+LABELS = ['Kaca', 'Kardus', 'Kertas', 'Logam', 'Plastik', 'Residu']
 
 # =========================================================
 # 2️⃣ FUNGSI PREDIKSI
 # =========================================================
-
 def predict_image(img):
     img = img.resize((224, 224))
     img_array = image.img_to_array(img)
@@ -25,7 +30,7 @@ def predict_image(img):
     preds = model.predict(img_array)
     pred_class = np.argmax(preds, axis=1)[0]
     confidence = np.max(preds)
-    return labels[pred_class], confidence
+    return LABELS[pred_class], confidence
 
 # =========================================================
 # 3️⃣ ANTARMUKA STREAMLIT
@@ -34,34 +39,24 @@ st.set_page_config(page_title="Klasifikasi Sampah Otomatis", layout="centered")
 st.title("♻️ Klasifikasi Sampah Otomatis (MobileNetV2)")
 st.markdown("Unggah gambar atau ambil foto dari kamera untuk mendeteksi jenis sampah.")
 
-# ---------------------------------------------------------
-# Pilih sumber gambar
-# ---------------------------------------------------------
 option = st.radio("Pilih sumber gambar:", ["Upload dari Internal", "Ambil dari Kamera"])
-
 image_input = None
 
-# ---------------------------------------------------------
-# Jika pilih upload
-# ---------------------------------------------------------
+# Upload dari internal
 if option == "Upload dari Internal":
     uploaded_file = st.file_uploader("Pilih file gambar (jpg/png/jpeg):", type=["jpg", "jpeg", "png"])
     if uploaded_file is not None:
         image_input = Image.open(uploaded_file)
-        st.image(image_input, caption="📁 Gambar yang diunggah", use_column_width=True)
+        st.image(image_input, caption="📁 Gambar yang diunggah", use_container_width=True)
 
-# ---------------------------------------------------------
-# Jika pilih kamera
-# ---------------------------------------------------------
+# Ambil dari kamera
 elif option == "Ambil dari Kamera":
     camera_photo = st.camera_input("📸 Ambil foto langsung")
     if camera_photo is not None:
         image_input = Image.open(io.BytesIO(camera_photo.getvalue()))
-        st.image(image_input, caption="📸 Gambar hasil kamera", use_column_width=True)
+        st.image(image_input, caption="📸 Gambar hasil kamera", use_container_width=True)
 
-# ---------------------------------------------------------
-# Prediksi hasil
-# ---------------------------------------------------------
+# Tombol prediksi
 if image_input is not None:
     st.write("---")
     if st.button("🔍 Prediksi Sekarang"):
@@ -70,4 +65,3 @@ if image_input is not None:
             st.success(f"✅ Prediksi: **{label.upper()}** (Confidence: {conf:.2f})")
 else:
     st.info("Silakan unggah gambar atau ambil foto terlebih dahulu untuk melakukan prediksi.")
-
