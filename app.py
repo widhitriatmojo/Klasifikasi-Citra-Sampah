@@ -58,14 +58,8 @@ if option == "Upload dari Internal":
 
     if uploaded_file is not None:
         try:
-            # Cara paling aman — tanpa read(), tanpa error pointer
             image_input = Image.open(uploaded_file).convert("RGB")
-
-            st.image(
-                image_input,
-                caption="Gambar yang diunggah",
-                use_container_width=True
-            )
+            st.image(image_input, caption="Gambar yang diunggah")  # tanpa use_container_width
         except UnidentifiedImageError:
             st.error("File yang diunggah bukan gambar yang valid.")
         except Exception as e:
@@ -80,11 +74,7 @@ elif option == "Ambil dari Kamera":
     if camera_photo is not None:
         try:
             image_input = Image.open(io.BytesIO(camera_photo.getvalue())).convert("RGB")
-            st.image(
-                image_input,
-                caption="📸 Gambar hasil kamera",
-                use_container_width=True
-            )
+            st.image(image_input, caption="📸 Gambar hasil kamera")  # tanpa use_container_width
         except Exception as e:
             st.error(f"Gagal membaca foto: {e}")
 
