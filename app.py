@@ -1,7 +1,6 @@
 import streamlit as st
 
-# KONFIGURASI HALAMAN (WAJIB PALING ATAS)
-
+# KONFIGURASI HALAMAN
 st.set_page_config(page_title="Klasifikasi Sampah Otomatis", layout="centered")
 
 import tensorflow as tf
@@ -11,8 +10,7 @@ import numpy as np
 from PIL import Image, UnidentifiedImageError
 import io
 
-# LOAD MODEL (pakai cache agar cepat)
-
+# LOAD MODEL
 @st.cache_resource
 def load_model():
     model = tf.keras.models.load_model("best_tl.h5")
@@ -20,11 +18,10 @@ def load_model():
 
 model = load_model()
 
-# Label kelas (ubah sesuai dataset kamu)
+# Label kelas
 LABELS = ['Kaca', 'Kardus', 'Kertas', 'Logam', 'Plastik', 'Residu']
 
 # FUNGSI PREDIKSI
-
 def predict_image(img):
     try:
         img = img.resize((224, 224))
@@ -39,8 +36,8 @@ def predict_image(img):
         st.error(f"Terjadi kesalahan saat memproses gambar: {e}")
         return None, None
 
-# ANTARMUKA STREAMLIT
 
+# ANTARMUKA STREAMLIT
 st.title("♻️ Klasifikasi Sampah Otomatis (MobileNetV2)")
 st.markdown(
     "Unggah gambar atau ambil foto dari kamera untuk mendeteksi jenis sampah. "
@@ -50,8 +47,9 @@ st.markdown(
 option = st.radio("Pilih sumber gambar:", ["Upload dari Internal", "Ambil dari Kamera"])
 image_input = None
 
-# UPLOAD GAMBAR DARI INTERNAL
-
+# ================================================
+#        UPLOAD GAMBAR DARI INTERNAL
+# ================================================
 if option == "Upload dari Internal":
     uploaded_file = st.file_uploader(
         "Pilih file gambar (JPG / JPEG / PNG):",
@@ -59,39 +57,50 @@ if option == "Upload dari Internal":
     )
 
     if uploaded_file is not None:
-        if uploaded_file.size > 5 * 1024 * 1024:
-            st.warning(" Ukuran file terlalu besar. Maksimal 5MB.")
-        else:
-            try:
-                image_bytes = uploaded_file.read()
-                image_input = Image.open(io.BytesIO(image_bytes)).convert("RGB")
-                st.image(image_input, caption=" Gambar yang diunggah", use_container_width=True)
-            except UnidentifiedImageError:
-                st.error(" File yang diunggah bukan gambar yang valid.")
-            except Exception as e:
-                st.warning(f" Terjadi peringatan kecil: {e}")
+        try:
+            # Cara paling aman — tanpa read(), tanpa error pointer
+            image_input = Image.open(uploaded_file).convert("RGB")
 
+            st.image(
+                image_input,
+                caption="Gambar yang diunggah",
+                use_container_width=True
+            )
+        except UnidentifiedImageError:
+            st.error("File yang diunggah bukan gambar yang valid.")
+        except Exception as e:
+            st.error(f"Terjadi kesalahan: {e}")
 
-# FOTO DARI KAMERA
-
+# ================================================
+#              FOTO DARI KAMERA
+# ================================================
 elif option == "Ambil dari Kamera":
     camera_photo = st.camera_input("📸 Ambil foto langsung")
+
     if camera_photo is not None:
         try:
             image_input = Image.open(io.BytesIO(camera_photo.getvalue())).convert("RGB")
-            st.image(image_input, caption="📸 Gambar hasil kamera", use_container_width=True)
+            st.image(
+                image_input,
+                caption="📸 Gambar hasil kamera",
+                use_container_width=True
+            )
         except Exception as e:
-            st.error(f" Gagal membaca foto: {e}")
+            st.error(f"Gagal membaca foto: {e}")
 
-# TOMBOL PREDIKSI
 
+# ================================================
+#               TOMBOL PREDIKSI
+# ================================================
 if image_input is not None:
     st.write("---")
     if st.button("🔍 Prediksi Sekarang"):
         with st.spinner("Sedang memproses gambar..."):
             label, conf = predict_image(image_input)
+
             if label is not None:
-                st.success(" Prediksi berhasil!")
+                st.success("Prediksi berhasil!")
+
                 st.markdown(
                     f"""
                     <div style='background-color:#E8F5E9;padding:15px;border-radius:10px'>
@@ -104,7 +113,6 @@ if image_input is not None:
                     unsafe_allow_html=True
                 )
 
-                # Tambahkan bar kepercayaan (confidence)
                 st.progress(conf)
 
 else:
