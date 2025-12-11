@@ -13,7 +13,7 @@ import io
 # LOAD MODEL
 @st.cache_resource
 def load_model():
-    model = tf.keras.models.load_model("best_tl_frozen.h5")
+    model = tf.keras.models.load_model("best_tl.h5")
     return model
 
 model = load_model()
