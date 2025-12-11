@@ -13,7 +13,7 @@ import io
 # LOAD MODEL
 @st.cache_resource
 def load_model():
-    model = tf.keras.models.load_model("best_tl.h5")
+    model = tf.keras.models.load_model("best_tl_frozen.h5")
     return model
 
 model = load_model()
@@ -107,4 +107,5 @@ if image_input is not None:
 
 else:
     st.info("Silakan unggah gambar atau ambil foto terlebih dahulu untuk melakukan prediksi.")
+
 
